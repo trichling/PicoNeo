@@ -9,11 +9,17 @@ import christmas_light_show
 # Hardware initialisieren (beide Module teilen sich das NeoPixel)
 neopixel_pin = Pin(1, Pin.OUT)
 np = NeoPixel(neopixel_pin, 12)
-buzzer_obj = PWM(Pin(19))
+buzzer_obj = PWM(Pin(8))
 
 # Hardware an beide Module übergeben
 neopixel_eyes.np = np
 christmas_light_show.init_hardware(neopixel_obj=np, buzzer_obj=buzzer_obj)
+
+# Sicherstellen, dass alle LEDs aus sind und brightness zurückgesetzt ist
+christmas_light_show.current_brightness = 0
+for i in range(12):
+    np[i] = (0, 0, 0)
+np.write()
 
 # Button-Konfiguration
 button = Pin(21, Pin.IN, Pin.PULL_UP)  # GP21 mit internem Pull-Up
@@ -22,8 +28,8 @@ print("\n" + "="*40)
 print("  WEIHNACHTS-ROBOTER")
 print("="*40)
 print("NeoPixel: GP1 (2x 12 LEDs)")
-print("Buzzer: GP19")
-print("Button: GP20")
+print("Buzzer: GP8")
+print("Button: GP21")
 print("")
 print("Modus: Augen-Animation")
 print("Button drücken -> Zufälliges Lied")

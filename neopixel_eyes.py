@@ -4,8 +4,7 @@ from time import sleep
 
 # Hardware-Konfiguration
 NUM_LEDS = 12  # Anzahl LEDs pro Ring (beide Ringe parallel geschaltet)
-neopixel_pin = Pin(1, Pin.OUT)  # GP1 für NeoPixel
-np = NeoPixel(neopixel_pin, NUM_LEDS)
+np = None  # type: ignore  # Wird von main.py oder beim direkten Start initialisiert
 
 # Farbe für die Augen (weiß für offenes Auge)
 EYE_COLOR = (255, 255, 255)  # RGB Weiß
@@ -19,8 +18,8 @@ def scale_color(color, brightness):
 def clear_all():
     """Schaltet alle LEDs aus"""
     for i in range(NUM_LEDS):
-        np[i] = OFF
-    np.write()
+        np[i] = OFF  # type: ignore
+    np.write()  # type: ignore
 
 def get_upper_half():
     """Gibt die LED-Indizes für die obere Hälfte zurück (Auge offen)"""
@@ -81,8 +80,8 @@ def look_straight():
     color = scale_color(EYE_COLOR, EYE_BRIGHTNESS)
 
     for led in get_upper_half():
-        np[led] = color
-    np.write()
+        np[led] = color  # type: ignore
+    np.write()  # type: ignore
 
 def blink():
     """Blinzel-Animation: Nur obere LEDs gehen aus (ganzer Ring wird dunkel)"""
@@ -96,15 +95,15 @@ def blink():
         # Von beiden Seiten gleichzeitig ausschalten
         if step < len(upper):
             left_idx = upper[step]
-            np[left_idx] = OFF
+            np[left_idx] = OFF  # type: ignore
 
         # Von rechts (rückwärts durch die Liste)
         right_step = len(upper) - 1 - step
         if right_step >= 0 and right_step != step:  # Nicht dieselbe LED zweimal
             right_idx = upper[right_step]
-            np[right_idx] = OFF
+            np[right_idx] = OFF  # type: ignore
 
-        np.write()
+        np.write()  # type: ignore
         sleep(0.05)
 
     # Kurz komplett geschlossen halten (alle LEDs aus)
@@ -119,14 +118,14 @@ def blink():
         # Linke Seite von der Mitte nach außen
         left_step = mid - step
         if left_step >= 0 and left_step < len(upper):
-            np[upper[left_step]] = color
+            np[upper[left_step]] = color  # type: ignore
 
         # Rechte Seite von der Mitte nach außen
         right_step = mid + step
         if right_step < len(upper) and right_step != left_step:
-            np[upper[right_step]] = color
+            np[upper[right_step]] = color  # type: ignore
 
-        np.write()
+        np.write()  # type: ignore
         sleep(0.05)
 
     # Zurück zur normalen Position
@@ -144,12 +143,12 @@ def look_left():
     # Hinweg: Linke obere LEDs aus, rechte untere LEDs an (im Uhrzeigersinn)
     for step in range(steps):
         if step < len(left_upper):
-            np[left_upper[step]] = OFF
+            np[left_upper[step]] = OFF  # type: ignore
 
         if step < len(lower_right):
-            np[lower_right[step]] = color
+            np[lower_right[step]] = color  # type: ignore
 
-        np.write()
+        np.write()  # type: ignore
         sleep(0.08)
 
     sleep(0.5)  # Kurz nach links schauen
@@ -157,12 +156,12 @@ def look_left():
     # Rückweg: In umgekehrter Reihenfolge (gegen Uhrzeigersinn zurückrollen)
     for step in range(steps - 1, -1, -1):
         if step < len(lower_right):
-            np[lower_right[step]] = OFF
+            np[lower_right[step]] = OFF  # type: ignore
 
         if step < len(left_upper):
-            np[left_upper[step]] = color
+            np[left_upper[step]] = color  # type: ignore
 
-        np.write()
+        np.write()  # type: ignore
         sleep(0.08)
 
 def look_right():
@@ -180,14 +179,14 @@ def look_right():
         # Rückwärts durch right_upper (3 -> 2 -> 1)
         if step < len(right_upper):
             idx = len(right_upper) - 1 - step
-            np[right_upper[idx]] = OFF
+            np[right_upper[idx]] = OFF  # type: ignore
 
         # Rückwärts durch lower_left (8 -> 7 -> 6)
         if step < len(lower_left):
             idx = len(lower_left) - 1 - step
-            np[lower_left[idx]] = color
+            np[lower_left[idx]] = color  # type: ignore
 
-        np.write()
+        np.write()  # type: ignore
         sleep(0.08)
 
     sleep(0.5)  # Kurz nach rechts schauen
@@ -198,14 +197,14 @@ def look_right():
         # Vorwärts durch lower_left (6 -> 7 -> 8)
         if step < len(lower_left):
             idx = len(lower_left) - 1 - step
-            np[lower_left[idx]] = OFF
+            np[lower_left[idx]] = OFF  # type: ignore
 
         # Vorwärts durch right_upper (1 -> 2 -> 3)
         if step < len(right_upper):
             idx = len(right_upper) - 1 - step
-            np[right_upper[idx]] = color
+            np[right_upper[idx]] = color  # type: ignore
 
-        np.write()
+        np.write()  # type: ignore
         sleep(0.08)
 
 def eye_animation_cycle():
@@ -223,6 +222,10 @@ def eye_animation_cycle():
 
 # Hauptprogramm (nur wenn direkt ausgeführt)
 if __name__ == "__main__":
+    # Hardware initialisieren wenn direkt ausgeführt
+    neopixel_pin = Pin(1, Pin.OUT)
+    np = NeoPixel(neopixel_pin, NUM_LEDS)
+
     print("\n" + "="*40)
     print("  NEOPIXEL AUGEN-ANIMATION")
     print("="*40)
