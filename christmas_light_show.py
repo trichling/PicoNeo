@@ -8,10 +8,27 @@ import melody_we_wish_you
 
 # Hardware-Konfiguration
 NUM_LEDS = 12  # Anzahl LEDs im Ring anpassen!
-neopixel_pin = Pin(1, Pin.OUT)  # GP1 für NeoPixel
-np = NeoPixel(neopixel_pin, NUM_LEDS)
 
-buzzer = PWM(Pin(19))  # GP19 für Buzzer
+# Hardware-Objekte - MÜSSEN vor Verwendung durch init_hardware() initialisiert werden
+# Die type: ignore Kommentare unterdrücken IDE-Warnungen, da zur Laufzeit garantiert ist,
+# dass init_hardware() aufgerufen wird bevor eine Funktion die Hardware verwendet
+np = None  # type: ignore
+buzzer = None  # type: ignore
+
+def init_hardware(neopixel_obj=None, buzzer_obj=None):
+    """Initialisiert Hardware oder übernimmt übergebene Objekte"""
+    global np, buzzer
+
+    if neopixel_obj is not None:
+        np = neopixel_obj
+    else:
+        neopixel_pin = Pin(1, Pin.OUT)
+        np = NeoPixel(neopixel_pin, NUM_LEDS)
+
+    if buzzer_obj is not None:
+        buzzer = buzzer_obj
+    else:
+        buzzer = PWM(Pin(19))
 
 # Lautstärke-Einstellungen
 VOLUME_LOW = 16384      # 25% Duty Cycle
@@ -50,6 +67,7 @@ MELODIES = {
 # Globale Variablen für weiche Übergänge
 current_brightness = 0
 current_hue = 0
+last_played_song_index = None  # Merkt sich das zuletzt gespielte Lied
 
 def hsv_to_rgb(h, s, v):
     """Konvertiert HSV zu RGB (h: 0-360, s: 0-1, v: 0-1)"""
@@ -117,8 +135,8 @@ def fade_to_black(fade_duration):
 
         r = int(255 * current_brightness)
         for i in range(NUM_LEDS):
-            np[i] = (r, 0, 0)
-        np.write()
+            np[i] = (r, 0, 0)  # type: ignore
+        np.write()  # type: ignore
         sleep(step_duration)
 
 def update_neopixel(frequency, duration):
@@ -143,23 +161,23 @@ def update_neopixel(frequency, duration):
 
         # Alle LEDs auf die gleiche Farbe setzen
         for i in range(NUM_LEDS):
-            np[i] = (r, g, b)
-        np.write()
+            np[i] = (r, g, b)  # type: ignore
+        np.write()  # type: ignore
 
         sleep(step_duration)
 
 def play_tone(frequency, duration):
     """Spielt einen Ton mit gegebener Frequenz und Dauer"""
     if frequency == 0:
-        buzzer.duty_u16(0)  # Pause
+        buzzer.duty_u16(0)  # type: ignore
     else:
-        buzzer.freq(frequency)
-        buzzer.duty_u16(VOLUME)
+        buzzer.freq(frequency)  # type: ignore
+        buzzer.duty_u16(VOLUME)  # type: ignore
 
     # NeoPixel parallel aktualisieren
     update_neopixel(frequency, duration)
 
-    buzzer.duty_u16(0)  # Ton aus
+    buzzer.duty_u16(0)  # type: ignore
 
     # Schnelles Abdimmen zwischen Tönen für stärkeren Pulsierungseffekt
     fade_to_black(0.05)  # 50ms Fade-Pause zwischen Noten
@@ -173,40 +191,87 @@ def play_melody(melody):
 def clear_neopixel():
     """Schaltet alle NeoPixel aus"""
     for i in range(NUM_LEDS):
-        np[i] = (0, 0, 0)
-    np.write()
+        np[i] = (0, 0, 0)  # type: ignore
+    np.write()  # type: ignore
 
-# Hauptprogramm
-print("\n" + "="*40)
-print("  WEIHNACHTS-LICHT-SHOW")
-print("="*40)
-print("NeoPixel: GP1 ({} LEDs)".format(NUM_LEDS))
-print("Buzzer: GP15")
-print("Helligkeit ~ Tonhöhe")
-print("Farbe: Rot")
-print("Drücke Strg+C zum Beenden")
-print("="*40 + "\n")
+def play_random_song():
+    """Spielt das nächste Weihnachtslied in der Reihenfolge (abwechselnd)"""
+    global current_brightness, last_played_song_index
 
-try:
-    while True:
-        for num, (name, melody) in MELODIES.items():
-            print(f"Spiele: {name}")
-            play_melody(melody)
+    # Alle verfügbaren Song-Indices
+    melody_keys = sorted(MELODIES.keys())
 
-            # Sanftes Ausblenden am Ende
-            for _ in range(10):
-                current_brightness = smooth_transition(current_brightness, 0, 0.2)
-                r = int(255 * current_brightness)
-                for i in range(NUM_LEDS):
-                    np[i] = (r, 0, 0)
-                np.write()
-                sleep(0.1)
+    # Nächsten Song auswählen (abwechselnd)
+    if last_played_song_index is None:
+        # Beim ersten Mal: Beginne mit dem ersten Lied
+        key = melody_keys[0]
+    else:
+        # Finde Index des zuletzt gespielten Lieds
+        try:
+            current_index = melody_keys.index(last_played_song_index)
+            # Nächster Song (mit Wrap-Around)
+            next_index = (current_index + 1) % len(melody_keys)
+            key = melody_keys[next_index]
+        except ValueError:
+            # Falls der Index nicht gefunden wird, starte von vorne
+            key = melody_keys[0]
 
-            clear_neopixel()
-            sleep(2)  # Pause zwischen verschiedenen Liedern
+    # Merke dir den aktuellen Song für das nächste Mal
+    last_played_song_index = key
 
-except KeyboardInterrupt:
-    buzzer.duty_u16(0)
-    buzzer.deinit()
+    name, melody = MELODIES[key]  # type: ignore
+
+    print(f"Spiele: {name}")
+
+    # Melodie abspielen
+    play_melody(melody)
+
+    # Sanftes Ausblenden am Ende
+    for _ in range(10):
+        current_brightness = smooth_transition(current_brightness, 0, 0.2)
+        r = int(255 * current_brightness)
+        for i in range(NUM_LEDS):
+            np[i] = (r, 0, 0)  # type: ignore
+        np.write()  # type: ignore
+        sleep(0.1)
+
     clear_neopixel()
-    print("\n\nBeendet - Frohe Weihnachten!")
+
+# Hauptprogramm (nur wenn direkt ausgeführt)
+if __name__ == "__main__":
+    # Hardware initialisieren
+    init_hardware()
+
+    print("\n" + "="*40)
+    print("  WEIHNACHTS-LICHT-SHOW")
+    print("="*40)
+    print("NeoPixel: GP1 ({} LEDs)".format(NUM_LEDS))
+    print("Buzzer: GP19")
+    print("Helligkeit ~ Tonhöhe")
+    print("Farbe: Rot")
+    print("Drücke Strg+C zum Beenden")
+    print("="*40 + "\n")
+
+    try:
+        while True:
+            for num, (name, melody) in MELODIES.items():
+                print(f"Spiele: {name}")
+                play_melody(melody)
+
+                # Sanftes Ausblenden am Ende
+                for _ in range(10):
+                    current_brightness = smooth_transition(current_brightness, 0, 0.2)
+                    r = int(255 * current_brightness)
+                    for i in range(NUM_LEDS):
+                        np[i] = (r, 0, 0)  # type: ignore
+                    np.write()  # type: ignore
+                    sleep(0.1)
+
+                clear_neopixel()
+                sleep(2)  # Pause zwischen verschiedenen Liedern
+
+    except KeyboardInterrupt:
+        buzzer.duty_u16(0)  # type: ignore
+        buzzer.deinit()  # type: ignore
+        clear_neopixel()
+        print("\n\nBeendet - Frohe Weihnachten!")

@@ -9,7 +9,7 @@ np = NeoPixel(neopixel_pin, NUM_LEDS)
 
 # Farbe für die Augen (weiß für offenes Auge)
 EYE_COLOR = (255, 255, 255)  # RGB Weiß
-EYE_BRIGHTNESS = 0.05  # 10% Helligkeit
+EYE_BRIGHTNESS = 0.01  # 1% Helligkeit
 OFF = (0, 0, 0)
 
 def scale_color(color, brightness):
@@ -208,44 +208,39 @@ def look_right():
         np.write()
         sleep(0.08)
 
-# Hauptprogramm
-print("\n" + "="*40)
-print("  NEOPIXEL AUGEN-ANIMATION")
-print("="*40)
-print("NeoPixel: GP1 (2x {} LEDs parallel)".format(NUM_LEDS))
-print("Sequenz: Geradeaus -> Blinzeln ->")
-print("         Links -> Rechts -> Loop")
-print("Drücke Strg+C zum Beenden")
-print("="*40 + "\n")
-
-try:
-    # Initialisierung
-    clear_all()
+def eye_animation_cycle():
+    """Ein kompletter Zyklus der Augen-Animation"""
+    look_straight()
+    sleep(1.5)
+    blink()
     sleep(0.5)
+    blink()
+    sleep(0.5)
+    look_left()
+    sleep(0.3)
+    look_right()
+    sleep(0.3)
 
-    while True:
-        # Sequenz wie gewünscht
-        print("Schaue geradeaus...")
-        look_straight()
-        sleep(1.5)
+# Hauptprogramm (nur wenn direkt ausgeführt)
+if __name__ == "__main__":
+    print("\n" + "="*40)
+    print("  NEOPIXEL AUGEN-ANIMATION")
+    print("="*40)
+    print("NeoPixel: GP1 (2x {} LEDs parallel)".format(NUM_LEDS))
+    print("Sequenz: Geradeaus -> Blinzeln ->")
+    print("         Links -> Rechts -> Loop")
+    print("Drücke Strg+C zum Beenden")
+    print("="*40 + "\n")
 
-        print("Blinzeln...")
-        blink()
+    try:
+        # Initialisierung
+        clear_all()
         sleep(0.5)
 
-        print("Blinzeln...")
-        blink()
-        sleep(0.5)
+        while True:
+            print("Animation...")
+            eye_animation_cycle()
 
-        print("Schaue nach links...")
-        look_left()
-        sleep(0.3)
-
-        print("Schaue nach rechts...")
-        look_right()
-        sleep(0.3)
-
-
-except KeyboardInterrupt:
-    clear_all()
-    print("\n\nBeendet!")
+    except KeyboardInterrupt:
+        clear_all()
+        print("\n\nBeendet!")
