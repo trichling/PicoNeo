@@ -23,56 +23,57 @@ def clear_all():
 
 def get_upper_half():
     """Gibt die LED-Indizes für die obere Hälfte zurück (Auge offen)"""
-    # Bei 12 LEDs: LED 0 ist oben, dann im Uhrzeigersinn
-    # Obere Hälfte: LEDs 9, 10, 11, 0, 1, 2, 3
-    quarter = NUM_LEDS // 4 
+    # Bei 12 LEDs und 180° Drehung: LED 6 ist oben, dann im Uhrzeigersinn
+    # Obere Hälfte: LEDs 3, 4, 5, 6, 7, 8, 9
+    quarter = NUM_LEDS // 4
+    half = NUM_LEDS // 2
 
-    # Von links-oben über oben nach rechts-oben
+    # Von links-oben über oben nach rechts-oben (180° gedreht)
     upper = []
     for i in range(NUM_LEDS):
-        # Obere Hälfte: von 9 bis 3 (bei 12 LEDs)
-        if i >= NUM_LEDS - quarter or i <= quarter:
+        # Obere Hälfte: von quarter bis three_quarter (bei 12 LEDs: 3 bis 9)
+        if i >= quarter and i <= half + quarter:
             upper.append(i)
     return upper
 
 def get_lower_half():
     """Gibt die LED-Indizes für die untere Hälfte zurück"""
-    # Untere Hälfte: LEDs 4, 5, 6, 7, 8
+    # 180° gedreht: Untere Hälfte: LEDs 10, 11, 0, 1, 2
     quarter = NUM_LEDS // 4
     three_quarter = NUM_LEDS * 3 // 4
 
     lower = []
-    for i in range(quarter + 1, three_quarter):
-        lower.append(i)
+    for i in range(NUM_LEDS):
+        # Untere Hälfte: von three_quarter bis quarter (wrap around)
+        if i >= three_quarter or i < quarter:
+            lower.append(i)
     return lower
 
 def get_left_quarter():
     """LEDs für linkes Viertel (oben links) - die beim Links-Schauen ausgehen"""
-    # Bei 12 LEDs: 9, 10, 11 (3 LEDs)
+    # 180° gedreht: Bei 12 LEDs: 3, 4, 5 (3 LEDs)
     quarter = NUM_LEDS // 4
-    return list(range(NUM_LEDS - quarter, NUM_LEDS))
+    return list(range(quarter, quarter * 2))
 
 def get_right_quarter():
     """LEDs für rechtes Viertel (oben rechts) - die beim Rechts-Schauen ausgehen"""
-    # Bei 12 LEDs: 1, 2, 3 (3 LEDs) - LED 0 bleibt immer an
+    # 180° gedreht: Bei 12 LEDs: 7, 8, 9 (3 LEDs) - LED 6 bleibt immer an
     quarter = NUM_LEDS // 4
-    return list(range(1, quarter + 1))
+    half = NUM_LEDS // 2
+    return list(range(half + 1, half + quarter + 1))
 
 def get_lower_left_quarter():
     """LEDs für unten links - die beim Rechts-Schauen angehen"""
-    # Bei 12 LEDs: 6, 7, 8 (3 LEDs)
+    # 180° gedreht: Bei 12 LEDs: 0, 1, 2 (3 LEDs)
     quarter = NUM_LEDS // 4
-    half = NUM_LEDS // 2
-    return list(range(half, half + quarter))
+    return list(range(0, quarter))
 
 def get_lower_right_quarter():
     """LEDs für unten rechts - die beim Links-Schauen angehen"""
-    # Bei 12 LEDs: 4, 5, 6 (3 LEDs)
-    # Obere Hälfte endet bei LED 3, also starten wir bei LED 4
-    quarter = NUM_LEDS // 4
-    half = NUM_LEDS // 2
-    # Von LED quarter+1 bis half (inklusiv)
-    return list(range(quarter + 1, half + 1))
+    # 180° gedreht: Bei 12 LEDs: 10, 11 (nur 2 LEDs wegen wrap-around)
+    three_quarter = NUM_LEDS * 3 // 4
+    # Wir geben die letzten LEDs zurück: 10, 11
+    return list(range(three_quarter, NUM_LEDS))
 
 def look_straight():
     """Auge schaut geradeaus (obere Hälfte an)"""
@@ -84,24 +85,35 @@ def look_straight():
     np.write()  # type: ignore
 
 def blink():
-    """Blinzel-Animation: Nur obere LEDs gehen aus (ganzer Ring wird dunkel)"""
+    """Blinzel-Animation: LEDs gehen von der Mitte nach außen aus (Augenlid schließt sich)"""
     color = scale_color(EYE_COLOR, EYE_BRIGHTNESS)
-    upper = get_upper_half()
+    upper = get_upper_half()  # [3, 4, 5, 6, 7, 8, 9]
 
-    # Phase 1: Auge schließt sich - alle oberen LEDs von außen nach innen ausschalten
-    steps = (len(upper) + 1) // 2  # Aufrunden, um alle LEDs zu erfassen
+    # Phase 1: Auge schließt sich - von der Mitte (LED 6) nach außen
+    # Mitte finden
+    mid = len(upper) // 2  # Index 3 in der Liste -> LED 6
 
-    for step in range(steps):
-        # Von beiden Seiten gleichzeitig ausschalten
-        if step < len(upper):
-            left_idx = upper[step]
-            np[left_idx] = OFF  # type: ignore
+    # Von der Mitte nach außen ausschalten
+    for step in range(mid + 1):
+        # Mittlere LED zuerst, dann symmetrisch nach außen
+        # step 0: LED 6 (Mitte)
+        # step 1: LED 5 und 7
+        # step 2: LED 4 und 8
+        # step 3: LED 3 und 9
 
-        # Von rechts (rückwärts durch die Liste)
-        right_step = len(upper) - 1 - step
-        if right_step >= 0 and right_step != step:  # Nicht dieselbe LED zweimal
-            right_idx = upper[right_step]
-            np[right_idx] = OFF  # type: ignore
+        # Mitte ausschalten
+        if step == 0:
+            np[upper[mid]] = OFF  # type: ignore
+        else:
+            # Links von der Mitte
+            left_idx = mid - step
+            if left_idx >= 0:
+                np[upper[left_idx]] = OFF  # type: ignore
+
+            # Rechts von der Mitte
+            right_idx = mid + step
+            if right_idx < len(upper):
+                np[upper[right_idx]] = OFF  # type: ignore
 
         np.write()  # type: ignore
         sleep(0.05)
@@ -110,20 +122,21 @@ def blink():
     clear_all()
     sleep(0.15)
 
-    # Phase 2: Auge öffnet sich wieder - obere LEDs von innen nach außen anschalten
-    for step in range(steps):
-        # Von der Mitte nach außen
-        mid = len(upper) // 2
+    # Phase 2: Auge öffnet sich wieder - von außen nach innen
+    # In umgekehrter Reihenfolge
+    for step in range(mid, -1, -1):
+        if step == 0:
+            # Mitte anschalten
+            np[upper[mid]] = color  # type: ignore
+        else:
+            # Äußere LEDs zuerst, dann nach innen
+            left_idx = mid - step
+            if left_idx >= 0:
+                np[upper[left_idx]] = color  # type: ignore
 
-        # Linke Seite von der Mitte nach außen
-        left_step = mid - step
-        if left_step >= 0 and left_step < len(upper):
-            np[upper[left_step]] = color  # type: ignore
-
-        # Rechte Seite von der Mitte nach außen
-        right_step = mid + step
-        if right_step < len(upper) and right_step != left_step:
-            np[upper[right_step]] = color  # type: ignore
+            right_idx = mid + step
+            if right_idx < len(upper):
+                np[upper[right_idx]] = color  # type: ignore
 
         np.write()  # type: ignore
         sleep(0.05)
