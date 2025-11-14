@@ -146,80 +146,108 @@ def blink():
     look_straight()
 
 def look_left():
-    """Auge schaut nach links (schrittweise Transition)"""
+    """Auge schaut nach links (9 o'clock Richtung)"""
     color = scale_color(EYE_COLOR, EYE_BRIGHTNESS)
 
-    left_upper = get_left_quarter()
-    lower_right = get_lower_right_quarter()
+    # Hinweg: Von 12-6 o'clock Position nach links rollen
+    # Schritt 1: LED 9 (3 o'clock) aus
+    np[9] = OFF  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-    steps = max(len(left_upper), len(lower_right))
+    # Schritt 2: LED 8 aus, LED 2 an (swap)
+    np[8] = OFF  # type: ignore
+    np[2] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-    # Hinweg: Linke obere LEDs aus, rechte untere LEDs an (im Uhrzeigersinn)
-    for step in range(steps):
-        if step < len(left_upper):
-            np[left_upper[step]] = OFF  # type: ignore
+    # Schritt 3: LED 7 aus, LED 1 an (swap)
+    np[7] = OFF  # type: ignore
+    np[1] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-        if step < len(lower_right):
-            np[lower_right[step]] = color  # type: ignore
-
-        np.write()  # type: ignore
-        sleep(0.08)
+    # Schritt 4: LED 0 (6 o'clock) an
+    np[0] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
     sleep(0.5)  # Kurz nach links schauen
 
-    # Rückweg: In umgekehrter Reihenfolge (gegen Uhrzeigersinn zurückrollen)
-    for step in range(steps - 1, -1, -1):
-        if step < len(lower_right):
-            np[lower_right[step]] = OFF  # type: ignore
+    # Rückweg: Zurück zur Ausgangsposition (umgekehrt)
+    # Schritt 4 rückwärts: LED 0 aus
+    np[0] = OFF  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-        if step < len(left_upper):
-            np[left_upper[step]] = color  # type: ignore
+    # Schritt 3 rückwärts: LED 1 aus, LED 7 an
+    np[1] = OFF  # type: ignore
+    np[7] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-        np.write()  # type: ignore
-        sleep(0.08)
+    # Schritt 2 rückwärts: LED 2 aus, LED 8 an
+    np[2] = OFF  # type: ignore
+    np[8] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
+
+    # Schritt 1 rückwärts: LED 9 an
+    np[9] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
 def look_right():
-    """Auge schaut nach rechts (schrittweise Transition)"""
+    """Auge schaut nach rechts (3 o'clock Richtung)"""
     color = scale_color(EYE_COLOR, EYE_BRIGHTNESS)
 
-    right_upper = get_right_quarter()  # [1, 2, 3]
-    lower_left = get_lower_left_quarter()  # [6, 7, 8]
+    # Hinweg: Von 12-6 o'clock Position nach rechts rollen
+    # Schritt 1: LED 3 (9 o'clock) aus
+    np[3] = OFF  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-    steps = max(len(right_upper), len(lower_left))
+    # Schritt 2: LED 4 aus, LED 10 an (swap)
+    np[4] = OFF  # type: ignore
+    np[10] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-    # Hinweg: Rechte obere LEDs aus, linke untere LEDs an (gegen Uhrzeigersinn)
-    # LEDs: 3 aus & 8 an, dann 2 aus & 7 an, dann 1 aus & 6 an
-    for step in range(steps):
-        # Rückwärts durch right_upper (3 -> 2 -> 1)
-        if step < len(right_upper):
-            idx = len(right_upper) - 1 - step
-            np[right_upper[idx]] = OFF  # type: ignore
+    # Schritt 3: LED 5 aus, LED 11 an (swap)
+    np[5] = OFF  # type: ignore
+    np[11] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-        # Rückwärts durch lower_left (8 -> 7 -> 6)
-        if step < len(lower_left):
-            idx = len(lower_left) - 1 - step
-            np[lower_left[idx]] = color  # type: ignore
-
-        np.write()  # type: ignore
-        sleep(0.08)
+    # Schritt 4: LED 0 (6 o'clock) an
+    np[0] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
     sleep(0.5)  # Kurz nach rechts schauen
 
-    # Rückweg: Gespiegelt - im Uhrzeigersinn zurückrollen
-    # LEDs: 6 aus & 1 an, dann 7 aus & 2 an, dann 8 aus & 3 an
-    for step in range(steps - 1, -1, -1):
-        # Vorwärts durch lower_left (6 -> 7 -> 8)
-        if step < len(lower_left):
-            idx = len(lower_left) - 1 - step
-            np[lower_left[idx]] = OFF  # type: ignore
+    # Rückweg: Zurück zur Ausgangsposition (umgekehrt)
+    # Schritt 4 rückwärts: LED 0 aus
+    np[0] = OFF  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-        # Vorwärts durch right_upper (1 -> 2 -> 3)
-        if step < len(right_upper):
-            idx = len(right_upper) - 1 - step
-            np[right_upper[idx]] = color  # type: ignore
+    # Schritt 3 rückwärts: LED 11 aus, LED 5 an
+    np[11] = OFF  # type: ignore
+    np[5] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
-        np.write()  # type: ignore
-        sleep(0.08)
+    # Schritt 2 rückwärts: LED 10 aus, LED 4 an
+    np[10] = OFF  # type: ignore
+    np[4] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
+
+    # Schritt 1 rückwärts: LED 3 an
+    np[3] = color  # type: ignore
+    np.write()  # type: ignore
+    sleep(0.08)
 
 def eye_animation_cycle():
     """Ein kompletter Zyklus der Augen-Animation mit natürlicher Zufälligkeit"""
