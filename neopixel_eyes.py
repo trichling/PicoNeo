@@ -178,7 +178,11 @@ def blink():
     look_straight()
 
 def look_left():
-    """Auge schaut nach links (9 o'clock Richtung)"""
+    """Auge schaut nach links (9 o'clock Richtung)
+
+    Returns:
+        True wenn durch Button unterbrochen, False sonst
+    """
     color = scale_color(EYE_COLOR, EYE_BRIGHTNESS)
 
     # Hinweg: Von 12-6 o'clock Position nach links rollen
@@ -204,7 +208,9 @@ def look_left():
     np.write()  # type: ignore
     sleep(0.08)
 
-    sleep(0.5)  # Kurz nach links schauen
+    # In der Endposition verweilen (1-3 Sekunden, interruptible)
+    if interruptible_sleep(random.uniform(1.0, 3.0)):
+        return True
 
     # Rückweg: Zurück zur Ausgangsposition (umgekehrt)
     # Schritt 4 rückwärts: LED 0 aus
@@ -229,8 +235,14 @@ def look_left():
     np.write()  # type: ignore
     sleep(0.08)
 
+    return False
+
 def look_right():
-    """Auge schaut nach rechts (3 o'clock Richtung)"""
+    """Auge schaut nach rechts (3 o'clock Richtung)
+
+    Returns:
+        True wenn durch Button unterbrochen, False sonst
+    """
     color = scale_color(EYE_COLOR, EYE_BRIGHTNESS)
 
     # Hinweg: Von 12-6 o'clock Position nach rechts rollen
@@ -256,7 +268,9 @@ def look_right():
     np.write()  # type: ignore
     sleep(0.08)
 
-    sleep(0.5)  # Kurz nach rechts schauen
+    # In der Endposition verweilen (1-3 Sekunden, interruptible)
+    if interruptible_sleep(random.uniform(1.0, 3.0)):
+        return True
 
     # Rückweg: Zurück zur Ausgangsposition (umgekehrt)
     # Schritt 4 rückwärts: LED 0 aus
@@ -280,6 +294,8 @@ def look_right():
     np[3] = color  # type: ignore
     np.write()  # type: ignore
     sleep(0.08)
+
+    return False
 
 def do_animation():
     """Führt eine zufällige Augen-Animation aus und kehrt danach zurück
@@ -316,29 +332,37 @@ def do_animation():
             return True
 
         if random.randint(1, 2) == 1:
-            look_left()
+            if look_left():
+                return True
         else:
-            look_right()
+            if look_right():
+                return True
 
     elif action <= 95:
         # 10% Chance: Nur in eine Richtung schauen (ohne Blinzeln)
         if random.randint(1, 2) == 1:
-            look_left()
+            if look_left():
+                return True
         else:
-            look_right()
+            if look_right():
+                return True
 
     else:
         # 5% Chance: Links und rechts schauen (ohne Blinzeln dazwischen)
         if random.randint(1, 2) == 1:
-            look_left()
+            if look_left():
+                return True
             if interruptible_sleep(random.uniform(0.2, 0.4)):
                 return True
-            look_right()
+            if look_right():
+                return True
         else:
-            look_right()
+            if look_right():
+                return True
             if interruptible_sleep(random.uniform(0.2, 0.4)):
                 return True
-            look_left()
+            if look_left():
+                return True
 
     return False
 
