@@ -1,6 +1,7 @@
 from machine import Pin
 from neopixel import NeoPixel
 from time import sleep
+import random
 
 # Hardware-Konfiguration
 NUM_LEDS = 12  # Anzahl LEDs pro Ring (beide Ringe parallel geschaltet)
@@ -221,17 +222,53 @@ def look_right():
         sleep(0.08)
 
 def eye_animation_cycle():
-    """Ein kompletter Zyklus der Augen-Animation"""
+    """Ein kompletter Zyklus der Augen-Animation mit natürlicher Zufälligkeit"""
     look_straight()
-    sleep(1.5)
-    blink()
-    sleep(0.5)
-    blink()
-    sleep(0.5)
-    look_left()
-    sleep(0.3)
-    look_right()
-    sleep(0.3)
+    sleep(random.uniform(1.0, 3.0))  # Zufällige Pause zwischen 1-3 Sekunden
+
+    # Bestimme zufällige Aktion mit gewichteter Wahrscheinlichkeit
+    action = random.randint(1, 100)
+
+    if action <= 60:
+        # 60% Chance: Nur blinzeln (häufigste Aktion)
+        blink()
+        sleep(random.uniform(0.3, 1.0))
+
+        # Manchmal doppelt blinzeln
+        if random.randint(1, 100) <= 30:  # 30% Chance
+            sleep(random.uniform(0.2, 0.5))
+            blink()
+
+    elif action <= 85:
+        # 25% Chance: Blinzeln, dann in eine Richtung schauen
+        blink()
+        sleep(random.uniform(0.3, 0.6))
+
+        if random.randint(1, 2) == 1:
+            look_left()
+        else:
+            look_right()
+
+    elif action <= 95:
+        # 10% Chance: Nur in eine Richtung schauen (ohne Blinzeln)
+        if random.randint(1, 2) == 1:
+            look_left()
+        else:
+            look_right()
+
+    else:
+        # 5% Chance: Links und rechts schauen (ohne Blinzeln dazwischen)
+        if random.randint(1, 2) == 1:
+            look_left()
+            sleep(random.uniform(0.2, 0.4))
+            look_right()
+        else:
+            look_right()
+            sleep(random.uniform(0.2, 0.4))
+            look_left()
+
+    # Kurze Pause am Ende
+    sleep(random.uniform(0.3, 0.8))
 
 # Hauptprogramm (nur wenn direkt ausgeführt)
 if __name__ == "__main__":
