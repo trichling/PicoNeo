@@ -5,6 +5,7 @@ from time import sleep
 # Verfügbare Melodien importieren
 import melody_jingle_bells
 import melody_we_wish_you
+import melody_silent_night
 
 # Hardware-Konfiguration
 NUM_LEDS = 12  # Anzahl LEDs im Ring anpassen!
@@ -28,7 +29,7 @@ def init_hardware(neopixel_obj=None, buzzer_obj=None):
     if buzzer_obj is not None:
         buzzer = buzzer_obj
     else:
-        buzzer = PWM(Pin(19))
+        buzzer = PWM(Pin(8))
 
 # Lautstärke-Einstellungen
 VOLUME_LOW = 16384      # 25% Duty Cycle
@@ -40,13 +41,17 @@ VOLUME = VOLUME_MEDIUM
 # Notendefinitionen (Frequenzen in Hz)
 NOTES = {
     'C4': 262,
+    'C#4': 277,
     'D4': 294,
     'E4': 330,
     'F4': 349,
+    'F#4': 370,
     'G4': 392,
+    'G#4': 415,
     'A4': 440,
     'B4': 494,
     'C5': 523,
+    'C#5': 554,
     'D5': 587,
     'E5': 659,
     'F5': 698,
@@ -62,6 +67,7 @@ MAX_FREQ = 784  # G5
 MELODIES = {
     1: ("Jingle Bells", melody_jingle_bells.melody),
     2: ("We Wish You a Merry Christmas", melody_we_wish_you.melody),
+    3: ("Silent Night", melody_silent_night.melody),
 }
 
 # Globale Variablen für weiche Übergänge
@@ -246,7 +252,7 @@ if __name__ == "__main__":
     print("  WEIHNACHTS-LICHT-SHOW")
     print("="*40)
     print("NeoPixel: GP1 ({} LEDs)".format(NUM_LEDS))
-    print("Buzzer: GP19")
+    print("Buzzer: GP8")
     print("Helligkeit ~ Tonhöhe")
     print("Farbe: Rot")
     print("Drücke Strg+C zum Beenden")
