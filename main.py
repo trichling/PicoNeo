@@ -1,6 +1,7 @@
 from machine import Pin, PWM
 from neopixel import NeoPixel
 from time import sleep
+import random
 
 # Module importieren
 import neopixel_eyes
@@ -76,36 +77,30 @@ try:
     sleep(0.1)  # Kurz warten für Stabilisierung
 
     while True:
-        # Button vor der Animation prüfen
+        # Button prüfen
         if check_button():
             continue
 
-        # Augen-Animation mit Button-Checks dazwischen
-        neopixel_eyes.look_straight()
+        # Zufällige Pause vor der Aktion (1-3 Sekunden)
+        sleep(random.uniform(1.0, 3.0))
+
+        # Button prüfen
+        if check_button():
+            continue
+
+        # Eine Animation ausführen (mit integrierter Zufälligkeit)
+        neopixel_eyes.do_animation()
+
+        # Button prüfen
+        if check_button():
+            continue
+
+        # Kurze Pause zwischen Animationen
         sleep(0.5)
-        if check_button(): continue
-        sleep(1.0)
-        if check_button(): continue
 
-        neopixel_eyes.blink()
-        if check_button(): continue
-        sleep(0.5)
-        if check_button(): continue
-
-        neopixel_eyes.blink()
-        if check_button(): continue
-        sleep(0.5)
-        if check_button(): continue
-
-        neopixel_eyes.look_left()
-        if check_button(): continue
-        sleep(0.3)
-        if check_button(): continue
-
-        neopixel_eyes.look_right()
-        if check_button(): continue
-        sleep(0.3)
-        if check_button(): continue
+        # Button prüfen
+        if check_button():
+            continue
 
 except KeyboardInterrupt:
     buzzer_obj.duty_u16(0)

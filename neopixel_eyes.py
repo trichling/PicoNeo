@@ -249,10 +249,15 @@ def look_right():
     np.write()  # type: ignore
     sleep(0.08)
 
-def eye_animation_cycle():
-    """Ein kompletter Zyklus der Augen-Animation mit natürlicher Zufälligkeit"""
+def do_animation():
+    """Führt eine zufällige Augen-Animation aus und kehrt danach zurück
+
+    Diese Funktion wird von main.py in einer Schleife aufgerufen.
+    Sie wählt zufällig eine Animation basierend auf Wahrscheinlichkeiten
+    und führt diese komplett aus, bevor sie zurückkehrt.
+    """
+    # Sicherstellen dass Auge gerade schaut
     look_straight()
-    sleep(random.uniform(1.0, 3.0))  # Zufällige Pause zwischen 1-3 Sekunden
 
     # Bestimme zufällige Aktion mit gewichteter Wahrscheinlichkeit
     action = random.randint(1, 100)
@@ -295,9 +300,6 @@ def eye_animation_cycle():
             sleep(random.uniform(0.2, 0.4))
             look_left()
 
-    # Kurze Pause am Ende
-    sleep(random.uniform(0.3, 0.8))
-
 # Hauptprogramm (nur wenn direkt ausgeführt)
 if __name__ == "__main__":
     # Hardware initialisieren wenn direkt ausgeführt
@@ -320,7 +322,7 @@ if __name__ == "__main__":
 
         while True:
             print("Animation...")
-            eye_animation_cycle()
+            do_animation()
 
     except KeyboardInterrupt:
         clear_all()
