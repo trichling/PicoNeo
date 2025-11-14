@@ -1,7 +1,6 @@
 from machine import Pin, PWM
 from neopixel import NeoPixel
 from time import sleep
-import random
 
 # Module importieren
 import neopixel_eyes
@@ -37,34 +36,40 @@ print("Button drücken -> Zufälliges Lied")
 print("Drücke Strg+C zum Beenden")
 print("="*40 + "\n")
 
-def check_button():
-    """Prüft ob Button gedrückt wurde und spielt ggf. Musik"""
+def is_button_pressed():
+    """Prüft ob Button gerade gedrückt ist (für schnelle Interrupt-Checks)
+
+    Returns:
+        True wenn Button gedrückt ist, False sonst
+    """
     global last_button_state
     button_state = button.value()
 
     # Button wurde gedrückt (Flanke 1 -> 0)
     if last_button_state == 1 and button_state == 0:
-        print("\n>>> Button gedrückt! <<<")
-        print("Wechsel zu Musik-Modus...\n")
-
-        # Augen ausschalten
-        neopixel_eyes.clear_all()
-        sleep(0.2)
-
-        # Zufälliges Lied abspielen
-        christmas_light_show.play_random_song()
-
-        # Kleine Pause
-        sleep(1)
-
-        # Zurück zum Augen-Modus
-        print("\nZurück zum Augen-Modus\n")
-
-        last_button_state = button.value()  # Status neu einlesen
+        last_button_state = button_state
         return True
 
     last_button_state = button_state
     return False
+
+def handle_button_press():
+    """Behandelt Button-Druck und spielt Musik"""
+    print("\n>>> Button gedrückt! <<<")
+    print("Wechsel zu Musik-Modus...\n")
+
+    # Augen ausschalten
+    neopixel_eyes.clear_all()
+    sleep(0.2)
+
+    # Zufälliges Lied abspielen
+    christmas_light_show.play_random_song()
+
+    # Kleine Pause
+    sleep(1)
+
+    # Zurück zum Augen-Modus
+    print("\nZurück zum Augen-Modus\n")
 
 try:
     # Initialisierung
@@ -76,31 +81,32 @@ try:
     print(f"Initialer Button-Status: {last_button_state}")
     sleep(0.1)  # Kurz warten für Stabilisierung
 
+    # Interrupt-Check-Funktion an neopixel_eyes übergeben
+    neopixel_eyes.interrupt_check = is_button_pressed
+
     while True:
-        # Button prüfen
-        if check_button():
+        # Führe Animation aus (wird automatisch unterbrochen bei Button-Druck)
+        interrupted = neopixel_eyes.do_animation()
+
+        # Wenn Animation durch Button unterbrochen wurde
+        if interrupted:
+            handle_button_press()
+            # Button-Status neu einlesen nach Musik
+            last_button_state = button.value()
             continue
 
-        # Zufällige Pause vor der Aktion (1-3 Sekunden)
-        sleep(random.uniform(1.0, 3.0))
+        # Kurze Pause zwischen Animationen (auch interruptible)
+        pause_duration = 0.5
+        interval = 0.05
+        elapsed = 0.0
 
-        # Button prüfen
-        if check_button():
-            continue
-
-        # Eine Animation ausführen (mit integrierter Zufälligkeit)
-        neopixel_eyes.do_animation()
-
-        # Button prüfen
-        if check_button():
-            continue
-
-        # Kurze Pause zwischen Animationen
-        sleep(0.5)
-
-        # Button prüfen
-        if check_button():
-            continue
+        while elapsed < pause_duration:
+            if is_button_pressed():
+                handle_button_press()
+                last_button_state = button.value()
+                break
+            sleep(interval)
+            elapsed += interval
 
 except KeyboardInterrupt:
     buzzer_obj.duty_u16(0)

@@ -12,9 +12,41 @@ EYE_COLOR = (255, 255, 255)  # RGB Weiß
 EYE_BRIGHTNESS = 0.01  # 1% Helligkeit
 OFF = (0, 0, 0)
 
+# Callback-Funktion für Interrupt-Checks (wird von main.py gesetzt)
+interrupt_check = None  # type: ignore
+
 def scale_color(color, brightness):
     """Skaliert eine Farbe mit Helligkeitsfaktor"""
     return tuple(int(c * brightness) for c in color)
+
+def interruptible_sleep(duration):
+    """Sleep-Funktion die durch Button-Callback unterbrochen werden kann
+
+    Args:
+        duration: Schlafdauer in Sekunden
+
+    Returns:
+        True wenn unterbrochen wurde, False wenn die Zeit normal abgelaufen ist
+    """
+    if interrupt_check is None:
+        # Kein Interrupt-Check gesetzt, normales Sleep
+        sleep(duration)
+        return False
+
+    # Teile die Wartezeit in kleine Intervalle auf (50ms)
+    interval = 0.05
+    elapsed = 0.0
+
+    while elapsed < duration:
+        # Prüfe ob unterbrochen werden soll
+        if interrupt_check():
+            return True
+
+        # Schlafe für ein kleines Intervall
+        sleep(interval)
+        elapsed += interval
+
+    return False
 
 def clear_all():
     """Schaltet alle LEDs aus"""
@@ -255,6 +287,9 @@ def do_animation():
     Diese Funktion wird von main.py in einer Schleife aufgerufen.
     Sie wählt zufällig eine Animation basierend auf Wahrscheinlichkeiten
     und führt diese komplett aus, bevor sie zurückkehrt.
+
+    Returns:
+        True wenn durch Button unterbrochen, False sonst
     """
     # Sicherstellen dass Auge gerade schaut
     look_straight()
@@ -265,17 +300,20 @@ def do_animation():
     if action <= 60:
         # 60% Chance: Nur blinzeln (häufigste Aktion)
         blink()
-        sleep(random.uniform(0.3, 1.0))
+        if interruptible_sleep(random.uniform(0.3, 1.0)):
+            return True
 
         # Manchmal doppelt blinzeln
         if random.randint(1, 100) <= 30:  # 30% Chance
-            sleep(random.uniform(0.2, 0.5))
+            if interruptible_sleep(random.uniform(0.2, 0.5)):
+                return True
             blink()
 
     elif action <= 85:
         # 25% Chance: Blinzeln, dann in eine Richtung schauen
         blink()
-        sleep(random.uniform(0.3, 0.6))
+        if interruptible_sleep(random.uniform(0.3, 0.6)):
+            return True
 
         if random.randint(1, 2) == 1:
             look_left()
@@ -293,12 +331,16 @@ def do_animation():
         # 5% Chance: Links und rechts schauen (ohne Blinzeln dazwischen)
         if random.randint(1, 2) == 1:
             look_left()
-            sleep(random.uniform(0.2, 0.4))
+            if interruptible_sleep(random.uniform(0.2, 0.4)):
+                return True
             look_right()
         else:
             look_right()
-            sleep(random.uniform(0.2, 0.4))
+            if interruptible_sleep(random.uniform(0.2, 0.4)):
+                return True
             look_left()
+
+    return False
 
 # Hauptprogramm (nur wenn direkt ausgeführt)
 if __name__ == "__main__":
